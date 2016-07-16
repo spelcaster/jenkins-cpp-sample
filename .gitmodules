@@ -1,0 +1,3 @@
+[submodule "lib/fff"]
+	path = lib/fff
+	url = https://github.com/meekrosoft/fff.git
