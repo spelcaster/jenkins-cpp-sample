@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Jenkins Sample Project - C/C++" default="build">
+    <!-- Paths -->
+    <property name="sourcedir" value="${basedir}/src" />
+    <property name="libdir" value="${basedir}/lib" />
+    <property name="bindir" value="${basedir}/bin" />
+    <property name="coveragedir" value="${basedir}/obj/tests" />
+    <property name="testsdir" value="${basedir}/tests" />
+    <property name="builddir" value="${basedir}/build" />
+    <property name="reportdir" value="${builddir}/reports" />
+
+    <!-- Commands -->
+    <property name="app_test.cmd" value="${builddir}/app_test" />
+    <property name="make.cmd" value="make" />
+    <property name="valgrind.cmd" value="valgrind" />
+    <property name="cppcheck.cmd" value="cppcheck" />
+    <property name="gcovr.cmd" value="gcovr" />
+    <property name="vera.cmd" value="${basedir}/bin/vera.sh" />
+    <property name="rats.cmd" value="rats" />
+    <property name="sonar.cmd" value="sonar-scanner" />
+
+    <macrodef name="clean-build-dir">
+        <sequential>
+            <delete dir="${reportdir}"/>
+            <delete dir="${builddir}/coverage-html"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="prepare-build-dir">
+        <sequential>
+            <mkdir dir="${reportdir}"/>
+            <mkdir dir="${builddir}/coverage-html"/>
+        </sequential>
+    </macrodef>
+
+    <target name="build" depends="prepare-env">
+        <antcall target="make-clean"/>
+        <antcall target="make"/>
+        <antcall target="make-test"/>
+        <antcall target="gtest"/>
+        <antcall target="gcovr"/>
+        <antcall target="gcovr-html"/>
+        <antcall target="rats"/>
+        <antcall target="vera"/>
+        <antcall target="cppcheck"/>
+    </target>
+
+    <target name="prepare-env">
+        <clean-build-dir />
+        <prepare-build-dir />
+    </target>
+
+    <target name="make" description="Compile project">
+        <exec dir="${basedir}" executable="${make.cmd}" failonerror="true">
+        </exec>
+    </target>
+
+    <target name="make-test" description="Compile project">
+        <exec dir="${basedir}" executable="${make.cmd}" failonerror="true">
+            <arg value="test"/>
+        </exec>
+    </target>
+
+    <target name="make-clean" description="Compile project">
+        <exec dir="${basedir}" executable="${make.cmd}" failonerror="true">
+            <arg value="clean-all"/>
+        </exec>
+    </target>
+
+    <target name="gtest" description="Run unit tests">
+        <exec dir="${basedir}" executable="${valgrind.cmd}" failonerror="true">
+            <arg value="--xml=yes" />
+            <arg value="--xml-file=${reportdir}/valgrind.xml" />
+            <arg value="${app_test.cmd}" />
+            <arg value="--gtest_output=xml:${reportdir}/xunit.xml" />
+        </exec>
+    </target>
+
+    <target name="gcovr" description="Unit Test code coverage">
+        <exec dir="${basedir}" executable="${gcovr.cmd}" failonerror="true">
+            <arg value="--object-directory=${coveragedir}" />
+            <arg value="--branches" />
+            <arg value="--xml-pretty" />
+            <arg value="-r" />
+            <arg path="${basedir}" />
+            <redirector output="${reportdir}/coverage.xml" />
+        </exec>
+    </target>
+
+    <target name="gcovr-html" description="Unit Test code coverage (web page)">
+        <exec dir="${coveragedir}" executable="${gcovr.cmd}" failonerror="true">
+            <arg value="-o" />
+            <arg value="${coveragedir}" />
+            <arg value="--branches" />
+            <arg value="-r" />
+            <arg path="${basedir}" />
+            <arg value="--html" />
+            <arg value="--html-details" />
+            <arg value="-o" />
+            <arg path="${builddir}/coverage-html/gcovr-report.html" />
+        </exec>
+    </target>
+
+    <target name="vera" description="Static code check for code style issues">
+        <exec dir="${bindir}" executable="${vera.cmd}" failonerror="false">
+            <arg value="${sourcedir}" />
+            <arg value="${testsdir}" />
+            <arg value="${reportdir}" />
+            <arg value="vera++-checkstyle.xml" />
+        </exec>
+    </target>
+
+    <target name="rats" description="Static code checker for security issues">
+        <exec dir="${basedir}" executable="${rats.cmd}" failonerror="false">
+            <arg value="-w" />
+            <arg value="3" />
+            <arg value="--xml" />
+            <arg path="${sourcedir}" />
+            <redirector output="${reportdir}/rats.xml" />
+        </exec>
+    </target>
+
+    <target name="cppcheck" description="C++ code check">
+        <exec dir="${basedir}" executable="${cppcheck.cmd}" failonerror="false">
+            <arg value="-v" />
+            <arg value="--xml" />
+            <arg value="--xml-version=2" />
+            <arg value="--enable=all"/>
+            <arg value="--suppress=*:${libdir}/*" />
+            <arg value="--suppress=missingIncludeSystem" />
+            <arg value="-I${sourcedir}"/>
+            <arg value="-I${testsdir}"/>
+            <arg path="${sourcedir}" />
+            <arg path="${testsdir}" />
+            <redirector error="${reportdir}/cppcheck.xml" />
+        </exec>
+    </target>
+
+    <target name="sonar" description="Sonar Runner">
+        <exec dir="${basedir}" executable="${sonar.cmd}" failonerror="true">
+        </exec>
+    </target>
+</project>
