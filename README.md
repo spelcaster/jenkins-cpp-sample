@@ -4,6 +4,14 @@ This project is a skeleton to be used with projects written in C/C++;
 
 # Tips
 
+## Jenkins Cli
+
+### create a new project from template
+
+```shell
+java -jar /path/to/jenkins-cli.jar -s http://jenkins.example.com/ create-job new-cpp-sample < /path/to/jenkins-cpp-sample.xml
+```
+
 ## Installing subodules
 
 ```shell
@@ -49,6 +57,21 @@ ant -f build.xml
 ```shell
 ant -f build.xml sonar
 ```
+
+## Jenkins Plugins
+
+- build-blocker-plugin;
+- rebuild;
+- ant;
+- warnings;
+- analysis-core;
+- clone-workspace-scm;
+- cobertura;
+- cppcheck;
+- htmlpublisher;
+- junit;
+- valgrind;
+- violations;
 
 ## Tools
 
